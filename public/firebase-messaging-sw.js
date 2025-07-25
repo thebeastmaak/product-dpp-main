@@ -1,0 +1,1 @@
+// Placeholder for Firebase Messaging Service Worker
