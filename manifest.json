@@ -1,0 +1,21 @@
+{
+  "name": "Digital Athlete Passport",
+  "short_name": "Athlete Passport",
+  "start_url": "/?id=010",
+  "display": "standalone",
+  "background_color": "#1c3b70",
+  "theme_color": "#1c3b70",
+  "description": "Instant Digital Passport for Athletes",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
