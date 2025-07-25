@@ -2,6 +2,11 @@ const container = document.getElementById("product-container");
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
+if (!id) {
+  container.innerHTML = `<p>❌ No product ID provided in URL.</p>`;
+  throw new Error("No product ID provided");
+}
+
 async function fetchProduct() {
   container.innerHTML = "Loading product details...";
 
@@ -19,25 +24,25 @@ async function fetchProduct() {
         <div class="header">DIGITAL ATHLETE PASSPORT</div>
         <div class="passport-body">
           <div class="athlete-photo">
-            <img src="${data.image || 'https://via.placeholder.com/300x400?text=Athlete'}" alt="${data.name}" />
+            <img src="${data.image || 'https://via.placeholder.com/300x400?text=Athlete'}" alt="${escapeHTML(data.name) || "Athlete"}" />
           </div>
           <div class="athlete-info">
-            <h2>${data.name || "Unnamed Athlete"}</h2>
+            <h2>${escapeHTML(data.name) || "Unnamed Athlete"}</h2>
             <ul>
-              <li><strong>Product ID:</strong> ${data.product_id || "N/A"}</li>
-              <li><strong>Country:</strong> ${data.country || "N/A"}</li>
-              <li><strong>Sport:</strong> ${(Array.isArray(data.sport) ? data.sport.join(", ") : data.sport) || "N/A"}</li>
-              <li><strong>Description:</strong> ${data.description || "N/A"}</li>
+              <li><strong>Product ID:</strong> ${escapeHTML(data.product_id) || "N/A"}</li>
+              <li><strong>Country:</strong> ${escapeHTML(data.country) || "N/A"}</li>
+              <li><strong>Sport:</strong> ${escapeHTML(Array.isArray(data.sport) ? data.sport.join(", ") : data.sport) || "N/A"}</li>
+              <li><strong>Description:</strong> ${escapeHTML(data.description) || "N/A"}</li>
             </ul>
           </div>
         </div>
         <div class="footer">
-          <div class="footer-name">${data.name || "Unnamed Athlete"}</div>
-          <div class="footer-details">ATHLETE / TEAM ${data.country || "N/A"}<br>${data.university || "University Not Provided"}</div>
+          <div class="footer-name">${escapeHTML(data.name) || "Unnamed Athlete"}</div>
+          <div class="footer-details">ATHLETE / TEAM ${escapeHTML(data.country) || "N/A"}<br>${escapeHTML(data.university) || "University Not Provided"}</div>
           <button class="chat-button" onclick="toggleChat()">Ask AI</button>
         </div>
 
-        <div id="chatbot-popup">
+        <div id="chatbot-popup" class="chatbot-popup">
           <div class="chat-header">Ask AI <span onclick="toggleChat()" style="cursor:pointer;float:right;">❌</span></div>
           <div id="chat-messages" class="chat-messages"></div>
           <div class="chat-input">
@@ -56,6 +61,20 @@ async function fetchProduct() {
   }
 }
 
+function escapeHTML(text) {
+  if (!text) return "";
+  return text.replace(/[&<>"']/g, (match) => {
+    const escapeMap = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    };
+    return escapeMap[match];
+  });
+}
+
 function toggleChat() {
   const popup = document.querySelector("#chatbot-popup");
   if (popup) popup.classList.toggle("visible");
@@ -71,9 +90,16 @@ function attachChatEvents() {
     if (!message) return;
 
     const messages = document.getElementById("chat-messages");
+
+    // Remove previous "AI is typing..." if any
+    const typingEl = messages.querySelector('em');
+    if (typingEl) typingEl.parentElement.remove();
+
     messages.innerHTML += `<div><em>AI is typing...</em></div>`;
     messages.scrollTop = messages.scrollHeight;
     input.value = "";
+
+    sendBtn.disabled = true;
 
     try {
       const res = await fetch("https://dpp-chatbot-backend.onrender.com/chat", {
@@ -84,20 +110,30 @@ function attachChatEvents() {
 
       const data = await res.json();
 
-if (res.ok && data.reply) {
-  messages.innerHTML += `<div><strong>AI:</strong> ${data.reply}</div>`;
-} else if (data.error) {
-  messages.innerHTML += `<div><strong>AI:</strong> ❌ Error: ${data.error}</div>`;
-  console.error("Backend error:", data.error);
-} else {
-  messages.innerHTML += `<div><strong>AI:</strong> 🤖 Unexpected server response.</div>`;
-  console.error("Unexpected response:", data);
-}
+      // Remove "AI is typing..." after response
+      const typingElAfter = messages.querySelector('em');
+      if (typingElAfter) typingElAfter.parentElement.remove();
+
+      if (res.ok && data.reply) {
+        messages.innerHTML += `<div><strong>AI:</strong> ${escapeHTML(data.reply)}</div>`;
+      } else if (data.error) {
+        messages.innerHTML += `<div><strong>AI:</strong> ❌ Error: ${escapeHTML(data.error)}</div>`;
+        console.error("Backend error:", data.error);
+      } else {
+        messages.innerHTML += `<div><strong>AI:</strong> 🤖 Unexpected server response.</div>`;
+        console.error("Unexpected response:", data);
+      }
     } catch (err) {
+      // Remove typing indicator on error
+      const typingElError = messages.querySelector('em');
+      if (typingElError) typingElError.parentElement.remove();
+
       messages.innerHTML += `<div><strong>AI:</strong> ❌ Error reaching AI service.</div>`;
+      console.error(err);
     }
 
     messages.scrollTop = messages.scrollHeight;
+    sendBtn.disabled = false;
   };
 
   if (micBtn) micBtn.onclick = () => {
