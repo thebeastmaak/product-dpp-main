@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Digital Athlete Passport</title>
+  <style>
+    body { background-color: #eaeaea; margin: 0; padding: 2rem; font-family: Arial, sans-serif; }
+    #product-container { max-width: 400px; margin: 0 auto; position: relative; }
+    .athlete-passport { border: 2px solid #1c3b70; background-color: #1c3b70; color: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 12px rgba(0,0,0,0.3); position: relative; }
+    .header { text-align: center; background: #1c3b70; color: #fff; padding: 1rem; font-weight: bold; font-size: 1.2rem; }
+    .passport-body { background: linear-gradient(to bottom right, #15315b, #502c83); padding: 1rem; }
+    .athlete-photo img { width: 100%; height: auto; border-radius: 8px; margin-bottom: 1rem; }
+    .athlete-info { background-color: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; }
+    .athlete-info h2 { margin-top: 0; color: #fff; }
+    .athlete-info ul { list-style: none; padding: 0; font-size: 0.9rem; }
+    .athlete-info li { margin: 0.3rem 0; }
+    .footer { background: #0e2044; text-align: center; padding: 1rem; position: relative; }
+    .footer-name { font-weight: bold; font-size: 1rem; margin-bottom: 0.2rem; }
+    .footer-details { font-size: 0.8rem; color: #a9c8f9; margin-bottom: 0.5rem; }
+    .chat-button { background: #fff; color: #1c3b70; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    .chat-button:hover { background: #dce6ff; }
+  </style>
+</head>
+<body>
+  <div id="product-container">Loading...</div>
+
+  <script>
+    const container = document.getElementById("product-container");
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id"); // participant code
+
+    async function fetchAthleteData() {
+      container.innerHTML = "Loading...";
+      try {
+        const res = await fetch(`https://crs-test-rr2025.microplustimingservices.com:8080/api/v2/athletes?competitionCode=WUG2025&code=${id}`);
+        const data = await res.json();
+
+        if (!data || !data.Athletes || data.Athletes.length === 0) {
+          container.innerHTML = `<p>❌ Athlete with code ${id} not found.</p>`;
+          return;
+        }
+
+        const athlete = data.Athletes[0]; // get first match
+
+        container.innerHTML = `
+          <div class="athlete-passport">
+            <div class="header">DIGITAL ATHLETE PASSPORT</div>
+            <div class="passport-body">
+              <div class="athlete-photo">
+                <img src="https://via.placeholder.com/300x400?text=Athlete+Photo" alt="Athlete Photo" />
+              </div>
+              <div class="athlete-info">
+                <h2>${athlete.FirstName || ""} ${athlete.LastName || ""}</h2>
+                <ul>
+                  <li><strong>Participant Code:</strong> ${athlete.Code || "N/A"}</li>
+                  <li><strong>Nationality:</strong> ${athlete.CountryName || "N/A"}</li>
+                  <li><strong>Date of Birth:</strong> ${athlete.BirthDate || "N/A"}</li>
+                  <li><strong>Discipline:</strong> ${athlete.DisciplineName || "N/A"}</li>
+                  <li><strong>Gender:</strong> ${athlete.Gender || "N/A"}</li>
+                </ul>
+              </div>
+            </div>
+            <div class="footer">
+              <div class="footer-name">${athlete.FirstName || ""} ${athlete.LastName || ""}</div>
+              <div class="footer-details">ATHLETE / ${athlete.CountryName || "Unknown"}</div>
+              <button class="chat-button" onclick="alert('Chat coming soon!')">🤖 Ask AI</button>
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        container.innerHTML = `<p>❌ Failed to fetch data.</p>`;
+      }
+    }
+
+    fetchAthleteData();
+  </script>
+</body>
+</html>
