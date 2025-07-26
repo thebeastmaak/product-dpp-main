@@ -1,9 +1,0 @@
-{
-  "name": "Digital Athlete Passport",
-  "short_name": "AthletePassport",
-  "start_url": "/?id=010",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1c3b70",
-  "icons": []
-}
